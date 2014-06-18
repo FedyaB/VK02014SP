@@ -1,10 +1,14 @@
-#include <QApplication>
-#include "auth.h"
+#include <QtWidgets/QApplication>
+#include "musicmodel.h"
+#include <QtWidgets/QListView>
 
 int main(int argc, char ** argv)
 {
     QApplication app(argc, argv);
-    Auth auth;
-    auth.show();
+    MusicModel music;
+    QListView view;
+    view.setModel(&music);
+    view.show();
     return app.exec();
+
 }

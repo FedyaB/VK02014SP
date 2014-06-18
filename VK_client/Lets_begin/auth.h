@@ -9,6 +9,7 @@ class Auth : public QWebView
     Q_OBJECT
 public:
     explicit Auth(QWidget *parent = 0);
+    void authorize();
 private slots:
 
     void handleUrlChange(QUrl const & Url);
