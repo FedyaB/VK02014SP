@@ -1,8 +1,10 @@
-QT += webkitwidgets
+QT += core webkitwidgets
 
 HEADERS += \
-    authorization.h
+    authorization.h \
+    musicboxmodel.h
 
 SOURCES += \
     authorization.cpp \
-    main.cpp
+    main.cpp \
+    musicboxmodel.cpp
