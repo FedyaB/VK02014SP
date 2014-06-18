@@ -8,24 +8,28 @@
 
 static QString const AUTHORIZATION_REDIRECT_URL("https://oauth.vk.com/blank.html");
 static QString const APP_ID("4417636");
+static QString const AUTHORIZATION_BASE_URL("https://oauth.vk.com/authorize");
 
 
 Authorization::Authorization(QWidget *parent): QWebView(parent)
 {
-    QUrl loginUrl("https://oauth.vk.com/authorize?");
+    connect(this,SIGNAL( urlChanged(QUrl) ), this, SLOT( handleChangedUrl(QUrl) ) ); 
+}
 
-    connect(this,SIGNAL( urlChanged(QUrl) ), this, SLOT( handleChangedUrl(QUrl) ) );
-
+void Authorization::authorize()
+{
+    QUrl authorizationUrl(AUTHORIZATION_BASE_URL);
     QUrlQuery query;
     query.addQueryItem(QString("client_id"),APP_ID);
-    query.addQueryItem(QString("scope"),QString("messages"));
+    query.addQueryItem(QString("scope"),QString("audio"));
     query.addQueryItem(QString("redirect_uri"),AUTHORIZATION_REDIRECT_URL);
     query.addQueryItem(QString("display"),QString("popup"));
     query.addQueryItem(QString("v"),QString("5.21"));
     query.addQueryItem(QString("response_type"),QString("token"));
 
-    loginUrl.setQuery(query);
-    load(loginUrl);
+    authorizationUrl.setQuery(query);
+    load(authorizationUrl);
+    show();
 }
 
 void Authorization::handleChangedUrl(QUrl const& newUrl)
@@ -48,5 +52,6 @@ void Authorization::handleChangedUrl(QUrl const& newUrl)
             QString errorDescription = query.queryItemValue("eror_description");
             emit failure(error,errorDescription);
         }
+        hide();
     }
 }

@@ -12,6 +12,7 @@ class Authorization : public QWebView
     Q_OBJECT
 public:
     Authorization(QWidget *parent = 0);
+    void authorize();
 
 signals:
         void success(QString const& token, QString const& userID);
