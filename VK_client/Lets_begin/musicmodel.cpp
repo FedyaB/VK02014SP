@@ -11,18 +11,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <QMediaContent>
 
-void MusicModel :: onSuccess(QString const& token, QString const& user)
-{
-    this -> token = token;
-    this -> user = user;
-    updateFiles();
-}
-MusicModel :: ~MusicModel()
-{
-    auth->close();
-    delete auth;
-}
 
 void MusicModel::updateFiles()
 {
@@ -45,6 +35,8 @@ AudioFile parseAudioFile(QJsonObject const &obj)
     unsigned duration = obj[(QString("duration"))].toInt();
     QUrl url(obj[QString("url")].toString());
 
+    qDebug() << url;
+
     AudioFile audio = { artist, title, duration, url };
     return audio;
 }
@@ -65,18 +57,30 @@ void MusicModel :: parseReply(QNetworkReply *reply)
     }
 
 }
-MusicModel::MusicModel(QObject *parent) :
+
+void MusicModel::statechangde(QMediaPlayer::MediaStatus bug)
+{
+    qDebug() <<  bug;
+}
+
+void MusicModel::positionchanged(qint64 position)
+{
+    emit progress(100.0 * position / player.duration());
+}
+MusicModel::MusicModel(QString const & token, QString const & user, QObject *parent) :
     QAbstractListModel(parent)
 {
-    auth = new Auth;
-    connect(auth, SIGNAL(success(QString,QString)), SLOT(onSuccess(QString, QString)));
     connect(&networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(parseReply(QNetworkReply*)));
-    auth -> authorize();
-}
+    this -> token = token;
+    this -> user = user;
+
+    player.setNotifyInterval(1000);
+    connect(&player, SIGNAL(positionChanged(qint64)), SLOT(positionchanged(qint64)));
+    connect(&player, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)), SLOT(statechangde(QMediaPlayer::MediaStatus)));
+    updateFiles();}
 
 int MusicModel::rowCount(const QModelIndex &) const
 {
-    qDebug() << "size " << files.size();
     return files.size();
 }
 
@@ -84,7 +88,6 @@ QVariant MusicModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DisplayRole)
     {
-        qDebug() << "row " << index.row();
         QString audio(files[index.row()].artist + QString(" ") + files[index.row()].title);
         return QVariant(audio);
     }
@@ -94,6 +97,37 @@ QVariant MusicModel::data(const QModelIndex &index, int role) const
 bool MusicModel::insertRows(int row, int count, const QModelIndex &parent)
 {
     beginInsertRows(parent, row, row + count - 1);
+    QVector<AudioFile> :: const_iterator first = files.begin();
+    QVector<AudioFile> :: const_iterator last = files.end();
+    for(QVector<AudioFile> :: const_iterator i = first; i != last; ++i)
+    {
+        QMediaContent media (i -> url);
+        playlist.addMedia(media);
+    }
     endInsertRows();
+    playlist.setCurrentIndex(0);
+    playlist.setPlaybackMode(QMediaPlaylist::Loop);
+    player.setPlaylist(& playlist);
+    //player.setMedia(QMediaContent(files.last().url));
     return true;
+}
+
+void MusicModel::play()
+{
+    player.play();
+}
+
+void MusicModel::pause()
+{
+    player.pause();
+}
+
+void MusicModel::next()
+{
+    playlist.next();
+}
+
+void MusicModel::previous()
+{
+    playlist.previous();
 }

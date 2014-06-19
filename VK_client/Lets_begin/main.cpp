@@ -1,14 +1,11 @@
 #include <QtWidgets/QApplication>
-#include "musicmodel.h"
-#include <QtWidgets/QListView>
+#include "mainwindow.h"
 
 int main(int argc, char ** argv)
 {
     QApplication app(argc, argv);
-    MusicModel music;
-    QListView view;
-    view.setModel(&music);
-    view.show();
+    MainWindow window;
+    window.show();
     return app.exec();
 
 }
