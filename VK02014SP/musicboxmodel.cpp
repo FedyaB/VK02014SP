@@ -11,37 +11,64 @@
 #include <QtNetwork/QNetworkReply>
 #include <QString>
 #include <QUrlQuery>
+#include <QMediaContent>
 
-MusicBoxModel::MusicBoxModel(QObject *parent) :
+
+MusicBoxModel::MusicBoxModel(QString const& accessToken, QString const& userID, QObject *parent) :
     QAbstractListModel(parent)
 {
-     authorizationBox = new Authorization;
-
-     connect(authorizationBox, SIGNAL( success(QString,QString) ), this, SLOT( onSuccess(QString,QString) ) );
      connect(&networkManager, SIGNAL( finished(QNetworkReply*) ), this, SLOT( parseReply(QNetworkReply*)) );
 
-     /////////////////////////////////
-     authorizationBox -> authorize();
-}
+     musicPlayer.setNotifyInterval(1000);
+     connect(&musicPlayer, SIGNAL( positionChanged(qint64) ), this, SLOT(checkAudioPosition(qint64)) );
 
-MusicBoxModel::~MusicBoxModel()
-{
-    authorizationBox -> close();//+++
-    delete authorizationBox;
-}
+     this -> accessToken = accessToken;
+     this -> userID = userID;
+     this -> updateAudioFiles();
 
-void MusicBoxModel::onSuccess(QString const& accessToken,QString const& userID)
-{
-    this -> accessToken = accessToken;
-    this -> userID = userID;
-    this -> updateAudioFiles();
+     musicPlaylist.setPlaybackMode(QMediaPlaylist::Loop);
+     musicPlaylist.setCurrentIndex(0);
 }
 
 bool MusicBoxModel::insertRows(int row, int count, const QModelIndex &parent)
 {
     beginInsertRows(parent, row, row + count - 1);
+        QVector<AudioFile>::const_iterator begin = aFiles.begin();
+        QVector<AudioFile>::const_iterator end = aFiles.end();
+        for(QVector<AudioFile>::const_iterator iter = begin; iter != end; ++iter)
+        {
+            QMediaContent media(iter -> url);
+            musicPlaylist.addMedia(media);
+            //qDebug() << iter -> url;
+        }
     endInsertRows();
+    musicPlayer.setPlaylist(&musicPlaylist);
     return true;
+}
+
+void MusicBoxModel::playAudio()
+{
+   musicPlayer.play();
+}
+
+void MusicBoxModel::pauseAudio()
+{
+   musicPlayer.pause();
+}
+
+void MusicBoxModel::previousAudio()
+{
+   musicPlaylist.previous();
+}
+
+void MusicBoxModel::nextAudio()
+{
+   musicPlaylist.next();
+}
+
+void MusicBoxModel::checkAudioPosition(qint64 position)
+{
+   emit progressAudio(100.0*position/musicPlayer.duration());
 }
 
 void MusicBoxModel::updateAudioFiles()
@@ -102,7 +129,7 @@ void MusicBoxModel::parseReply(QNetworkReply *reply)
 
 int MusicBoxModel::rowCount(const QModelIndex &) const
 {
-    qDebug() << "size " << aFiles.size();
+    //qDebug() << "size " << aFiles.size();
     return aFiles.size();
 }
 
@@ -111,7 +138,7 @@ QVariant MusicBoxModel::data(const QModelIndex &index, int role) const
 {
     if(role == Qt::DisplayRole)
     {
-        qDebug() << "row " << index.row();
+        //qDebug() << "row " << index.row();
         QString audio(aFiles[index.row()].artist + QString(" ") + aFiles[index.row()].title);
         return QVariant(audio);
     }

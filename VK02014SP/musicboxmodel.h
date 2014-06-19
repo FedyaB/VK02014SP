@@ -9,6 +9,8 @@
 #include <QString>
 #include <QVector>
 #include <QVariant>
+#include <QMediaPlaylist>
+#include <QMediaPlayer>
 
 
 struct AudioFile
@@ -26,28 +28,35 @@ class MusicBoxModel : public QAbstractListModel
     Q_OBJECT
 public:
 
-    explicit MusicBoxModel(QObject *parent = 0);
-    ~MusicBoxModel();
+    explicit MusicBoxModel(QString const& accessToken, QString const& userID, QObject *parent = 0);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
     bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex());
 
+
 private:
-        Authorization *authorizationBox;
         QString accessToken;
         QString userID;
         QVector<AudioFile> aFiles;
         QNetworkAccessManager networkManager;
+        QMediaPlaylist musicPlaylist;
+        QMediaPlayer musicPlayer;
+
 signals:
+        void progressAudio(float);
 
 public slots:
+        void playAudio();
+        void pauseAudio();
+        void nextAudio();
+        void previousAudio();
 
 private slots:
-           void onSuccess(QString const&, QString const&);
            void updateAudioFiles();
            void parseReply(QNetworkReply *reply);
+           void checkAudioPosition(qint64);
 
 };
 

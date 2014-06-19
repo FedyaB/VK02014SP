@@ -23,7 +23,7 @@ void Authorization::authorize()
     query.addQueryItem(QString("client_id"),APP_ID);
     query.addQueryItem(QString("scope"),QString("audio"));
     query.addQueryItem(QString("redirect_uri"),AUTHORIZATION_REDIRECT_URL);
-    query.addQueryItem(QString("display"),QString("popup"));
+    query.addQueryItem(QString("display"),QString("mobile"));
     query.addQueryItem(QString("v"),QString("5.21"));
     query.addQueryItem(QString("response_type"),QString("token"));
 
